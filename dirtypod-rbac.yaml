@@ -1,0 +1,58 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: dirtypod
+subjects:
+  - kind: ServiceAccount
+    name: dirtypod
+    namespace: kube-system
+roleRef:
+  kind: ClusterRole
+  name: naughty
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  name: naughty
+  labels:
+    app: dirtypod
+    chart: hydra-rbac
+rules:
+  - apiGroups:
+      - extensions
+    resources:
+      - podsecuritypolicies
+    resourceNames:
+      - dirtypod-psp
+    verbs:
+      - use
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: dirtypod
+  namespace: kube-system
+  labels:
+    app: dirtypod
+---
+apiVersion: extensions/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: dirtypod-psp
+spec:
+  allowPrivilegeEscalation: false
+  allowedCapabilities:
+  - '*'
+  fsGroup:
+    rule: RunAsAny
+  runAsUser:
+    rule: RunAsAny
+  seLinux:
+    rule: RunAsAny
+  supplementalGroups:
+    rule: RunAsAny
+  volumes:
+  - '*'
+

